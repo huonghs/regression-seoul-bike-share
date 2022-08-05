@@ -1,0 +1,357 @@
+---
+title: "Final_Project_9700_Group4"
+authors: Andrea Escalona, Sierra Levy, Huong Thao Nguyen, Balakumaran Ramaswamy Kanna, Zijing Yang
+output: word_document
+date: '2022-05-02'
+---
+
+```{r setup, include=FALSE}
+
+```
+
+# Seoul Bike Share Dataset
+
+```{r, echo=FALSE, results=FALSE, message=FALSE}
+
+#Install Packages 
+library(dplyr)
+library(ALSM)
+library(rsq)
+library(tidyverse)
+
+setwd("/Users/slevy/Desktop/Homework")
+
+#Read in the Seoul dataframe. We are also going to check the data 
+df=read.csv("seoul_v2.csv",fileEncoding="UTF-8-BOM")
+
+#Understanding the data
+dim(df)
+colnames(df)
+
+```
+
+# PART 1 
+
+Question 1 - Provide justification of determining the response (Y) and predictor (X) variables. 
+
+For this project, we have chosen Bike Count as our response variable and temperature as our predictor variable. Looking at the plot below we can see there is a linear relationship between the two. As temperature increases so does the volume of bikes rented. 
+
+```{r echo = FALSE}
+
+Y=df$bike.count
+X=df$temp
+
+```
+
+# Question 2 - Construct a scatterplot of Y against X. Comment on the association between the two variables. 
+
+Based on the scatter plot below, we can see there is a positive, linear relationship between bike count and temperature. As temperature increases, so does bike count. A data transformation is not needed. 
+
+```{r echo = FALSE}
+
+plot(Y~X, data=df, xlab="Temperature", ylab="Bike Count")
+m=lm(Y~X, data=df)
+abline(m, col="red")
+summary(m)
+##transformation on Y
+new.y=sqrt(Y)
+plot(new.y~X, data=df, xlab="Temperature", ylab="Bike Count")
+new.m=lm(new.y~X, data=df)
+abline(new.m, col="red")
+summary(m)
+```
+
+
+# Question 3 - Regress (transformed) Y on (transofrmed) X. State the estimated regression function and superimpose it on the scatterplot. 
+
+The estimated Regression function is Y = 325 + 32.12X
+
+```{r echo = FALSE}
+
+new.y=sqrt(Y)
+plot(new.y~X, data=df)
+new.m=lm(new.y~X, data=df)
+summary(new.m)
+abline(new.m, col="red")
+
+```
+
+# Question 4 - Report the values of MSE and R^2. Interpret them, respectively, in the context of the problem. 
+
+MSE = 115.1902
+R^2 = .318041
+
+Our R^2 value indicates that there is a low level or correlation between the two variables. 
+
+```{r echo = FALSE}
+
+summary(new.m)$sigma^2
+summary(new.m)$r.squared
+anova(new.m)
+
+```
+
+
+# Question 5 - Test whether B1 is different from zero or not at a .05 level of significance. State the alternatives, the value of the test statistic, p value, and your conclusion. 
+
+Alternatives: B1 $\ne$ 0
+
+Decision Rule:  
+
+$t^{*} \leq t (1- \small \alpha/2,n-2)$ - conclude Ho  
+
+$t^{*} \geq t(1-\small \alpha/2,n-2)$ - conclude Ha  
+
+Conclusion: 
+p-value is 2.528188e-09. As $t^{*} > t-critical$ and we conclude Ha. 
+
+```{r echo = FALSE}
+
+qt(0.975,98)
+
+```
+
+
+# Question 6 - Superimpose the (pointwise) 90% confidence band on the scatterplot. 
+
+```{r echo = FALSE}
+new.y=sqrt(Y)
+plot(new.y~X, data=df, xlab="Temperature", ylab="Bike Count")
+new.m=lm(new.y~X, data=df)
+abline(new.m, col="red")
+data(package="ALSM")
+newx=seq(-9.10,33.40,by=1) 
+cb90=ci.reg(new.m,data.frame(X),type="w",alpha=0.10)
+lines(X,cb90[,3],col="blue"); lines(X,cb90[,4],col="blue")
+
+
+```
+
+# Question 7 - Construct a scatterplot of semi-studentized residuals against the predicted values and a normal probability plot of the semi-studentized residuals. Perform model diagnostics using the two plots. 
+
+*Model Diagnostic:*  
+We do not detect any violations of model assumption in the two plots.   
+
+- The semi-studentized residuals against the predicted values plot shows that the residuals randomly distributed along the baseline 0, showing a systematic tendencies between positive and negative.  
+
+- The Q-Q plot shows that the residuals are normally distributed, as the data points closely following the straightline with minor outliners.
+
+```{r echo = FALSE}
+
+semires=residuals(new.m)/summary(new.m)$sigma
+plot(semires~new.m$fitted.values, ylab="semistudentized residuals", xlab="fitted values")
+abline(h = 0)
+qqnorm(semires,main="Normal Q-Q plot of semistudentized residuals")
+qqline(semires, col="red")
+shapiro.test(new.m$residuals)
+shapiro.test(m$residuals) #untransformed data
+
+```
+
+# Part 2
+
+Building the models. 
+
+# Model 1 
+
+# Part (i) - Produce an ANOVA table. Report SST, SSR, and SSE, and their corresponding degrees of freedom. 
+
+SSR : 15,591,854 - d.o.f : 3  
+
+SSE : 22,380,995 - d.o.f : 96  
+
+SST : 37,972,849 - d.o.f : 99
+
+```{r echo = FALSE}
+
+round(cor(df[,c(2,3,4,5,6,7,8,9,10,11)]),digits=2)
+
+m<-lm(df$bike.count~df$hour+ df$temp + df$solar.radiation,data=df)
+summary(m)
+anova(m)
+
+```
+
+
+# Part (ii) - Perform the F test of overall linear relationship. State the alternatives, the value of the test statistic, p-value, and your conclusion. 
+
+Alternatives: 
+
+Ho: $\small \beta_{1}  = \small \beta_{2} = \small \beta_{3} = 0$  
+
+Ha: Not all $\small \beta_{k} = 0  (k = 1,2,3)$
+
+Decision Rule: 
+
+If $F^{*} \leq 2.699393$, conclude Ho, otherwise, conclude Ha. 
+
+Conclusion
+
+Since $F^{*} \Large\geq 2.699393$, conclude Ha. 
+
+p-value = 4.885e-11
+
+```{r echo = FALSE}
+
+# F(0.95,3,496)
+qf(0.95,3,496)
+
+summary(m)
+anova(m)
+
+
+```
+
+
+# Part (iii) - Compute the extra sum of squares (SSR X3 | X1,X2) and the coefficient of partial determination, the value of the test statistic, p-value, and your conclusion. 
+
+$SSR(X_{3}\mid X_{1}X_{2})= 338526$  
+
+$R^{2}_{(Y 3\mid 12)} = 0.01490024$
+
+Hypothesis Testing:  
+
+Ho: $\small \beta_{3} = 0$  
+
+Ha: $\small \beta_{3} \ne 0$
+
+We have $F^{*} = 1.4521$ and $p-value = 0.2312$
+
+Since $F^{*} \Large\geq 2.699393$, thus we fail to reject Ho.
+
+
+```{r echo = FALSE}
+
+# SSR(X2|X1)
+m1<-lm(df$bike.count~df$hour,df) # regression of Y on X1 only
+m2<-update(m1,~.+df$temp) # regression of Y on X1 & X2
+anova(m1,m2)
+m2
+# Type I SS
+m3<-update(m2,~.+df$solar.radiation) # regression of Y on X1, X2, & X3
+anova(m3)  # Type I ANOVA; Sequential F-tests: use MSE from m3 to estimate error variance
+m3  
+#  SSR(X3| X1,X2) ---> 338526
+# proceeding ahead to calculate coefficient of partial determination 'R_square_Y_(3|12)'
+# Coefficient of partial determination
+library(rsq)
+rsq.partial(m3,m2) # in R package 'rsq'
+#R_square_Y_(3|12) -> 0.01490024
+
+```
+
+
+# Part (iv) - Test whether X3 is helpful, given that X1 and X2 are in a model. State the alternatives, the value of the test staistic, p-value, and your conclusion. 
+
+Testing H0: 
+$\small \beta_{3} = 0$
+
+Decision Rule: 
+If $F^{*} = \leq 3.940163$, conclude Ho, otherwise, conclude Ha. 
+
+Conclusion: 
+$1.4521 \leq 3.940163$, conclude Ho, so we can discard $X_{3}$ from the model (given that $X_{1}$ and $X_{2}$ were already present)
+
+```{r echo = FALSE}
+anova(m2,m3)
+qf(0.95,1,496)
+```
+
+
+# Model 2
+
+# (v) - Incorporate the cateogircal variable into the model by defining the indicator variables. 
+
+Indicator variables: 
+
+Functioning Day (Yes/No = 1 & 0)
+Season (Autumn/Winter/Spring/Summer)
+Holiday (Holiday/No Holiday)
+
+```{r echo = FALSE}
+
+#Identifying number of categories. 
+unique(df$functioning.day)
+
+#Creating new column for category 
+df$functioning_day_yes = ifelse(df$functioning.day == 'Yes', 1, 0)
+
+#Creating model with categorical variable 
+categorical_model <-lm(df$bike.count~df$temp + df$functioning_day_yes,data=df)
+
+```
+
+
+# (vi) - Interpret the coefficient of the categorical variable and that of the interaction term, respectively. 
+
+The coefficient of categorical variable - functioning_day_yes is 3.897e+02.
+The coefficient of the interaction term is between variable and functioning_day_yes is 3.008e+01
+
+```{r echo = FALSE}
+
+scatterplot(df$bike.count~df$temp|df$functioning_day_yes,data=df,smooth=FALSE, xlab="Temperature", ylab="Bike Count")
+
+m.seoulbike1=lm(df$bike.count~df$temp+df$functioning_day_yes,df); summary(m.seoulbike1)
+confint(m.seoulbike1,level=0.95)
+
+m.seoulbike2=lm(df$bike.count~df$temp*df$functioning_day_yes,df); summary(m.seoulbike2)
+anova(lm(df$bike.count~df$hour,df),m.seoulbike2)
+
+```
+
+
+# (vii) - Should you drop the interaction term? Explain 
+
+We should drop the interaction term.
+
+Hypothesis Testing:  
+  
+Ho: $\small \beta_{3} = 0$  
+
+Ha: $\small \beta_{3} \ne 0$
+  
+($\small \beta_{3}$ can be interpreted as the increase in effectiveness of hour for each 1 unit increase in functioning_day and vice-versa)
+
+We have: $t^{*} = .504$.   
+For the level of significance .05, we require $t(0,975; 96 ) = 1.964$.
+As $t^{*} \leq 1.964$, we conclude Ho, that  $\small \beta_{3} = 0$.
+We conclude that there is no interaction effects.
+
+```{r echo = FALSE}
+
+qt(.975,496)
+
+```
+
+# Model 3
+
+# (viii) - Use the AIC criteron and "backward elimination" procedure to obtain the "best" model. Report the subset predictor variables to be included in the model and the corresponding AIC value. 
+
+```{r echo = FALSE}
+
+library(ALSM)
+
+m1<-lm(df$bike.count~.,df[,-10])
+m.backward<-step(m1,direction="backward") # backward elimination by AIC
+summary(m.backward)
+
+head(df)
+
+x1 = df$hour
+x2 = df$temp
+x3 = df$humidity
+x4 = df$wind.speed
+x5 = df$visibility
+x6 = df$dew.point.temp
+x7 = df$rainfall
+x8 = df$snowfall
+x9 = df$functioning_day
+
+#x1+x2+x3+x4+x5+x6+x7+x8+x9
+
+m2<-lm(df$bike.count~.,df[,3:14])
+summary(m2)
+m.backward<-step(m2,direction="backward") # backward elimination by AIC
+summary(m.backward)
+
+```
